@@ -25,5 +25,5 @@ func main()  {
 }
 
 func SetRouter()  {
-	beego.Router("/login",&controllers.UserController{},"post:Login")
+	beego.Router("/account/add",&controllers.AccountController{},"post:AddAccount")
 }
