@@ -4,7 +4,8 @@ import "time"
 
 // 账号结构体
 type Account struct {
-	Id string `orm:"pk" json:"id"`
+	Id uint `orm:"pk" json:"id"`
+	Password string `json:"password"`
 	Picture string `json:"picture"`
 	Name string	`json:"name" valid:"Required"`
 	Introduce string `json:"introduce"`

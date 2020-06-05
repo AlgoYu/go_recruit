@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
-	uuid "github.com/satori/go.uuid"
+	"golang.org/x/crypto/bcrypt"
 	"time"
 )
 
@@ -23,15 +23,36 @@ func (accountController *AccountController)AddAccount()  {
 	if err := json.Unmarshal(accountController.Ctx.Input.RequestBody,&account);err!=nil{
 		accountController.Data["json"] = common.Fail(err.Error())
 	}else{
-		orm := orm.NewOrm()
-		account.Id = uuid.NewV4().String()
+		o := orm.NewOrm()
 		account.Picture = DEFAULT_PICTURE_URL
+		var hash []byte
+		hash,err = bcrypt.GenerateFromPassword([]byte(account.Password),bcrypt.DefaultCost)
+		account.Password = string(hash)
 		account.CreateDatetime = time.Now()
 		account.UpdateDatetime = time.Now()
-		if insert, err := orm.Insert(&account);err!=nil{
+		var accountId int64
+		if accountId, err = o.Insert(&account);err!=nil{
 			accountController.Data["json"] = common.Fail(err.Error())
 		}else{
-			accountController.Data["json"] = common.Success(insert)
+			accountController.Data["json"] = common.Success(accountId)
+		}
+	}
+	accountController.ServeJSON()
+}
+
+// 查询账户
+func (accountController *AccountController)SearchAccount()  {
+	id, err := accountController.GetUint64("id")
+	if err!=nil{
+		accountController.Data["json"] = common.Fail(err.Error())
+	}else{
+		o := orm.NewOrm()
+		account := models.Account{Id: uint(id)}
+		err = o.Read(&account)
+		if err!=nil{
+			accountController.Data["json"] = common.Fail(err.Error())
+		}else {
+			accountController.Data["json"] = common.Success(account)
 		}
 	}
 	accountController.ServeJSON()

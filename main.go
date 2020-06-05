@@ -26,4 +26,5 @@ func main()  {
 
 func SetRouter()  {
 	beego.Router("/account/add",&controllers.AccountController{},"post:AddAccount")
+	beego.Router("/account/search",&controllers.AccountController{},"get:SearchAccount")
 }
