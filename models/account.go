@@ -9,6 +9,7 @@ type Account struct {
 	Picture string `json:"picture"`
 	Name string	`json:"name" valid:"Required"`
 	Introduce string `json:"introduce"`
+	Address string `json:"address"`
 	Ic string `json:"ic" valid:"Required"`
 	Contact string `json:"contact" valid:"Required"`
 	Sex uint8 `json:"sex" valid:"Required"`

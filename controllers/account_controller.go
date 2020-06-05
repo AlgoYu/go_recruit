@@ -40,6 +40,40 @@ func (accountController *AccountController)AddAccount()  {
 	accountController.ServeJSON()
 }
 
+// 删除账户
+func (accountController *AccountController)DeleteAccount()  {
+	id, err := accountController.GetUint64("id")
+	if err!=nil{
+		accountController.Data["json"] = common.Fail(err.Error())
+	}else{
+		o := orm.NewOrm()
+		var num int64
+		if num, err = o.Delete(&models.Account{Id: uint(id)});err!=nil{
+			accountController.Data["json"] = common.Fail(err.Error())
+		}else{
+			accountController.Data["json"] = common.Success(num)
+		}
+	}
+	accountController.ServeJSON()
+}
+
+// 修改用户
+func (accountController *AccountController)ModifyAccount()  {
+	var account models.Account
+	if err := json.Unmarshal(accountController.Ctx.Input.RequestBody,&account);err!=nil{
+		accountController.Data["json"] = common.Fail(err.Error())
+	}else{
+		o := orm.NewOrm()
+		var num int64
+		if num, err = o.Update(&account);err!=nil{
+			accountController.Data["json"] = common.Fail(err.Error())
+		}else{
+			accountController.Data["json"] = common.Success(num)
+		}
+	}
+	accountController.ServeJSON()
+}
+
 // 查询账户
 func (accountController *AccountController)SearchAccount()  {
 	id, err := accountController.GetUint64("id")
@@ -48,8 +82,7 @@ func (accountController *AccountController)SearchAccount()  {
 	}else{
 		o := orm.NewOrm()
 		account := models.Account{Id: uint(id)}
-		err = o.Read(&account)
-		if err!=nil{
+		if err = o.Read(&account);err!=nil{
 			accountController.Data["json"] = common.Fail(err.Error())
 		}else {
 			accountController.Data["json"] = common.Success(account)
@@ -58,7 +91,25 @@ func (accountController *AccountController)SearchAccount()  {
 	accountController.ServeJSON()
 }
 
-// 模板
-func (accountController *AccountController)Template()  {
-	accountController.Ctx.WriteString("Hello world!")
+// 所有账户
+func (accountController *AccountController)AllAccount()  {
+	keyWord := accountController.GetString("keyWord")
+	currentPage,_ := accountController.GetInt("currentPage")
+	pageSize,_ := accountController.GetInt("pageSize")
+
+	o := orm.NewOrm()
+	table := o.QueryTable("account")
+	table.Filter("name__contains",keyWord)
+	table.Filter("email__contains",keyWord)
+
+	var pagesResult common.PageResult
+	pagesResult.Total,_ = table.Count()
+	pagesResult.PageSize = pageSize
+	table.Limit(pageSize,(currentPage-1)*pageSize)
+
+	var accounts []models.Account
+	table.All(&accounts)
+	pagesResult.Data = accounts
+	accountController.Data["json"] = common.Success(pagesResult)
+	accountController.ServeJSON()
 }
