@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cn.anydevelop/go_recruit/common"
 	"cn.anydevelop/go_recruit/controllers"
 	"cn.anydevelop/go_recruit/models"
 	"github.com/astaxie/beego"
@@ -10,7 +11,7 @@ import (
 
 func init() {
 	// set default database
-	orm.RegisterDataBase("default", "mysql", "root:xy942698.@tcp(127.0.0.1:3306)/recruit?charset=utf8", 30)
+	orm.RegisterDataBase("default", "mysql", beego.AppConfig.String("mysql_connect"), 30)
 	//orm.SetMaxIdleConns("default",5)
 	//orm.SetMaxOpenConns("default",20)
 	//// 设置为 UTC 时间
@@ -25,14 +26,18 @@ func init() {
 
 	// create table
 	//orm.RunSyncdb("default", false, true)
+
+	common.ConnectRedis()
 }
 
 func main()  {
+	defer common.CloseRedis()
 	SetRouter()
 	beego.Run()
 }
 
 func SetRouter()  {
+	beego.Router("/login",&controllers.AccountController{},"post:Login")
 	beego.Router("/account/add",&controllers.AccountController{},"post:AddAccount")
 	beego.Router("/account/delete",&controllers.AccountController{},"delete:DeleteAccount")
 	beego.Router("/account/modify",&controllers.AccountController{},"put:ModifyAccount")

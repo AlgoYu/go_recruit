@@ -6,15 +6,49 @@ import (
 	"encoding/json"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
+	uuid "github.com/satori/go.uuid"
 	"golang.org/x/crypto/bcrypt"
 	"time"
 )
 
-const DEFAULT_PICTURE_URL = "http://img.duoziwang.com/2019/05/08050202206333.jpg"
+// 默认头像
+const (
+	DEFAULT_PICTURE_URL = "http://img.duoziwang.com/2019/05/08050202206333.jpg"
+	MINUTE = 60
+)
 
 // 账号控制器
 type AccountController struct {
 	beego.Controller
+}
+
+// 登陆用户
+func (accountController *AccountController)Login()  {
+	var account models.Account
+	if err := json.Unmarshal(accountController.Ctx.Input.RequestBody,&account);err!=nil{
+		accountController.Data["json"] = common.Fail(err.Error())
+	}else{
+		o := orm.NewOrm()
+		table := o.QueryTable("account")
+		source := models.Account{}
+		err = table.Filter("contact",account.Contact).One(&source)
+		if err != nil{
+			accountController.Data["json"] = common.Fail(err.Error())
+		}else{
+			err = bcrypt.CompareHashAndPassword([]byte(source.Password),[]byte(account.Password))
+			if err!=nil{
+				accountController.Data["json"] = common.Fail(err.Error())
+			}else{
+				token := uuid.NewV4().String()
+				common.HashPut(token,"accountId",source.Id)
+				common.HashPut(token,"accountName",source.Name)
+				common.HashPut(token,"accountEmail",source.Email)
+				common.Expire(token,30*MINUTE)
+				accountController.Data["json"] = common.Success(token)
+			}
+		}
+	}
+	accountController.ServeJSON()
 }
 
 // 增加用户
