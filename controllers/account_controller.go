@@ -4,9 +4,10 @@ import (
 	"cn.anydevelop/go_recruit/common"
 	"cn.anydevelop/go_recruit/models"
 	"encoding/json"
+	"fmt"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
-	uuid "github.com/satori/go.uuid"
+	"github.com/dgrijalva/jwt-go"
 	"golang.org/x/crypto/bcrypt"
 	"time"
 )
@@ -39,13 +40,45 @@ func (accountController *AccountController)Login()  {
 			if err!=nil{
 				accountController.Data["json"] = common.Fail(err.Error())
 			}else{
-				token := uuid.NewV4().String()
-				common.HashPut(token,"accountId",source.Id)
-				common.HashPut(token,"accountName",source.Name)
-				common.HashPut(token,"accountEmail",source.Email)
-				common.Expire(token,30*MINUTE)
-				accountController.Data["json"] = common.Success(token)
+				token := jwt.NewWithClaims(jwt.SigningMethodHS256,jwt.MapClaims{
+					"accountContact": source.Contact,
+					"datetime": time.Now(),
+				})
+				signedString, sigErr := token.SignedString([]byte(beego.AppConfig.String("token_secret_key")))
+				if sigErr!=nil{
+					beego.Error(sigErr)
+				}
+				beego.Debug(signedString)
+				common.HashPut(source.Contact,"accountId",source.Id)
+				common.HashPut(source.Contact,"accountName",source.Name)
+				common.HashPut(source.Contact,"accountEmail",source.Email)
+				common.Expire(source.Contact,30*MINUTE)
+				accountController.Data["json"] = common.Success(signedString)
 			}
+		}
+	}
+	accountController.ServeJSON()
+}
+
+// 注销登陆
+func (accountController *AccountController)Logout()  {
+	tokenStr := accountController.Ctx.Request.Header.Get("Token")
+	beego.Debug(tokenStr)
+	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+		if _,ok := token.Method.(*jwt.SigningMethodHMAC);!ok{
+			return nil,fmt.Errorf("Unexpected signing method: %v\", token.Header[\"alg\"])")
+		}
+		return []byte(beego.AppConfig.String("token_secret_key")), nil
+	})
+	if err!=nil{
+		beego.Debug(err)
+		accountController.Data["json"] = common.Fail(err.Error())
+	}else {
+		if claim, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+			beego.Debug(claim["accountContact"].(string))
+			beego.Debug(claim["datetime"].(string))
+			common.Delete(claim["accountContact"].(string))
+			accountController.Data["json"] = common.Success(true)
 		}
 	}
 	accountController.ServeJSON()

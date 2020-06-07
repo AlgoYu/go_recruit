@@ -36,6 +36,13 @@ func Expire(key string,timeValue int)  {
 	}
 }
 
+func Delete(key string)  {
+	_, err := Gedis.Do("DEL", key)
+	if err!=nil{
+		beego.Error(err)
+	}
+}
+
 func PutTimeLimit(key,value string,timeValue int)  {
 	_, err := Gedis.Do("SET", key, value, "EX", timeValue)
 	if err!=nil{
