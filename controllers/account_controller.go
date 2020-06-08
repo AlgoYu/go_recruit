@@ -46,13 +46,15 @@ func (accountController *AccountController)Login()  {
 				})
 				signedString, sigErr := token.SignedString([]byte(beego.AppConfig.String("token_secret_key")))
 				if sigErr!=nil{
+					accountController.Data["json"] = common.Fail(err.Error())
 					beego.Error(sigErr)
+				}else{
+					beego.Debug(signedString)
+					common.HashPut(source.Contact,"accountId",source.Id)
+					common.HashPut(source.Contact,"accountName",source.Name)
+					common.HashPut(source.Contact,"accountEmail",source.Email)
+					common.Expire(source.Contact,30*MINUTE)
 				}
-				beego.Debug(signedString)
-				common.HashPut(source.Contact,"accountId",source.Id)
-				common.HashPut(source.Contact,"accountName",source.Name)
-				common.HashPut(source.Contact,"accountEmail",source.Email)
-				common.Expire(source.Contact,30*MINUTE)
 				accountController.Data["json"] = common.Success(signedString)
 			}
 		}
