@@ -51,4 +51,6 @@ func SetRouter() {
 	beego.Router("/admin/logout", &controllers.AccountController{}, "delete:LogoutAdmin")
 	beego.Router("/admin/add", &controllers.AccountController{}, "post:AddAdmin")
 	beego.Router("/admin/delete", &controllers.AccountController{}, "delete:DeleteAdmin")
+	beego.Router("/admin/search", &controllers.AccountController{}, "get:SearchAdmin")
+	beego.Router("/admin/delete", &controllers.AccountController{}, "put:ModifyAdmin")
 }

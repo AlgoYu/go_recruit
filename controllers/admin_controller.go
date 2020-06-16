@@ -106,9 +106,29 @@ func (adminController *AdminController) DeleteAdmin() {
 }
 
 func (adminController *AdminController) ModifyAdmin() {
-
+	var admin models.Admin
+	if err := json.Unmarshal(adminController.Ctx.Input.RequestBody, &admin); err != nil {
+		adminController.Data["json"] = common.Fail(err.Error())
+	} else {
+		o := orm.NewOrm()
+		if _, err := o.Update(&admin); err != nil {
+			adminController.Data["json"] = common.Fail(err.Error())
+		} else {
+			adminController.Data["json"] = common.Success(true)
+		}
+	}
+	adminController.ServeJSON()
 }
 
 func (adminController *AdminController) SearchAdmin() {
-
+	name := adminController.GetString("name")
+	o := orm.NewOrm()
+	admin := &models.Admin{Name: name}
+	err := o.Read(admin)
+	if err != nil {
+		adminController.Data["json"] = common.Fail(err.Error())
+	} else {
+		adminController.Data["json"] = common.Success(admin)
+	}
+	adminController.ServeJSON()
 }
