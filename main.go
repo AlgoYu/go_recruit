@@ -40,11 +40,15 @@ func main() {
 }
 
 func SetRouter() {
-	beego.Router("/login", &controllers.AccountController{}, "post:Login")
-	beego.Router("/logout", &controllers.AccountController{}, "delete:Logout")
+	beego.Router("/account/login", &controllers.AccountController{}, "post:Login")
+	beego.Router("/account/logout", &controllers.AccountController{}, "delete:Logout")
 	beego.Router("/account/add", &controllers.AccountController{}, "post:AddAccount")
 	beego.Router("/account/delete", &controllers.AccountController{}, "delete:DeleteAccount")
 	beego.Router("/account/modify", &controllers.AccountController{}, "put:ModifyAccount")
 	beego.Router("/account/search", &controllers.AccountController{}, "get:SearchAccount")
 	beego.Router("/account/all", &controllers.AccountController{}, "get:AllAccount")
+	beego.Router("/admin/login", &controllers.AccountController{}, "post:LoginAdmin")
+	beego.Router("/admin/logout", &controllers.AccountController{}, "delete:LogoutAdmin")
+	beego.Router("/admin/add", &controllers.AccountController{}, "post:AddAdmin")
+	beego.Router("/admin/delete", &controllers.AccountController{}, "delete:DeleteAdmin")
 }

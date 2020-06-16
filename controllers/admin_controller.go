@@ -98,7 +98,11 @@ func (adminController *AdminController) AddAdmin() {
 }
 
 func (adminController *AdminController) DeleteAdmin() {
-
+	name := adminController.GetString("name")
+	o := orm.NewOrm()
+	o.Delete(&models.Admin{Name: name})
+	adminController.Data["json"] = common.Success(true)
+	adminController.ServeJSONP()
 }
 
 func (adminController *AdminController) ModifyAdmin() {
