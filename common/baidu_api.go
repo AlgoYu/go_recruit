@@ -36,7 +36,7 @@ func GetBaiduToken() {
 				} else {
 					beego.Debug(baiduToken)
 					BaiduAccessToken = baiduToken.AccessToken
-					Put("Application_Baidu_Api_Token", BaiduAccessToken)
+					Set("Application_Baidu_Api_Token", BaiduAccessToken)
 					Expire("Application_Baidu_Api_Token", baiduToken.ExpiresIn)
 				}
 			}

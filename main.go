@@ -3,9 +3,11 @@ package main
 import (
 	"cn.anydevelop/go_recruit/common"
 	"cn.anydevelop/go_recruit/controllers"
+	"cn.anydevelop/go_recruit/filter"
 	"cn.anydevelop/go_recruit/models"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
+	"github.com/astaxie/beego/plugins/cors"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -30,13 +32,34 @@ func init() {
 	// connect to redis
 	common.ConnectRedis()
 
+	// 获取百度API Token
 	common.GetBaiduToken()
 }
 
 func main() {
 	defer common.CloseRedis()
+	SetFilter()
 	SetRouter()
 	beego.Run()
+}
+
+func SetFilter() {
+	// 允许跨域请求
+	beego.InsertFilter("*", beego.BeforeRouter, cors.Allow(&cors.Options{
+		//允许访问所有源
+		AllowAllOrigins: true,
+		//可选参数"GET", "POST", "PUT", "DELETE", "OPTIONS" (*为所有)
+		//其中Options跨域复杂请求预检
+		AllowMethods: []string{"*"},
+		//指的是允许的Header的种类
+		AllowHeaders: []string{"*"},
+		//公开的HTTP标头列表
+		ExposeHeaders: []string{"Content-Length"},
+		//如果设置，则允许共享身份验证凭据，例如cookie
+		AllowCredentials: true,
+	}))
+	// 管理员Token过滤
+	beego.InsertFilter("/admin/*", beego.BeforeRouter, filter.AdminTokenFilter)
 }
 
 func SetRouter() {
@@ -47,10 +70,10 @@ func SetRouter() {
 	beego.Router("/account/modify", &controllers.AccountController{}, "put:ModifyAccount")
 	beego.Router("/account/search", &controllers.AccountController{}, "get:SearchAccount")
 	beego.Router("/account/all", &controllers.AccountController{}, "get:AllAccount")
-	beego.Router("/admin/login", &controllers.AccountController{}, "post:LoginAdmin")
-	beego.Router("/admin/logout", &controllers.AccountController{}, "delete:LogoutAdmin")
-	beego.Router("/admin/add", &controllers.AccountController{}, "post:AddAdmin")
-	beego.Router("/admin/delete", &controllers.AccountController{}, "delete:DeleteAdmin")
-	beego.Router("/admin/search", &controllers.AccountController{}, "get:SearchAdmin")
-	beego.Router("/admin/delete", &controllers.AccountController{}, "put:ModifyAdmin")
+	beego.Router("/loginAdmin", &controllers.AdminController{}, "post:LoginAdmin")
+	beego.Router("/admin/logout", &controllers.AdminController{}, "delete:LogoutAdmin")
+	beego.Router("/admin/add", &controllers.AdminController{}, "post:AddAdmin")
+	beego.Router("/admin/delete", &controllers.AdminController{}, "delete:DeleteAdmin")
+	beego.Router("/admin/search", &controllers.AdminController{}, "get:SearchAdmin")
+	beego.Router("/admin/delete", &controllers.AdminController{}, "put:ModifyAdmin")
 }

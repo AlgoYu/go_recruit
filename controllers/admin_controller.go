@@ -24,27 +24,21 @@ func (adminController *AdminController) LoginAdmin() {
 		o := orm.NewOrm()
 		table := o.QueryTable("admin")
 		source := models.Admin{}
-		err = table.Filter("name", admin.Name).One(&source)
-		if err != nil {
+		if err := table.Filter("name", admin.Name).One(&source); err != nil {
+			adminController.Data["json"] = common.Fail(err.Error())
+		} else if err := bcrypt.CompareHashAndPassword([]byte(source.Password), []byte(admin.Password)); err != nil {
 			adminController.Data["json"] = common.Fail(err.Error())
 		} else {
-			err = bcrypt.CompareHashAndPassword([]byte(source.Password), []byte(admin.Password))
-			if err != nil {
+			token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+				"adminName": source.Name,
+				"datetime":  time.Now(),
+			})
+			if signedString, err := token.SignedString([]byte(beego.AppConfig.String("token_secret_key"))); err != nil {
 				adminController.Data["json"] = common.Fail(err.Error())
 			} else {
-				token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-					"adminName": source.Name,
-					"datetime":  time.Now(),
-				})
-				signedString, sigErr := token.SignedString([]byte(beego.AppConfig.String("token_secret_key")))
-				if sigErr != nil {
-					adminController.Data["json"] = common.Fail(err.Error())
-				} else {
-					common.HashPut(source.Name, "adminName", source.Name)
-					common.HashPut(source.Name, "adminPicture", source.Picture)
-					common.Expire(source.Name, 30*MINUTE)
-					adminController.Data["json"] = common.Success(signedString)
-				}
+				common.HSet(source.Name, "adminPicture", source.Picture)
+				common.Expire(source.Name, 30*MINUTE)
+				adminController.Data["json"] = common.Success(signedString)
 			}
 		}
 	}
@@ -52,24 +46,22 @@ func (adminController *AdminController) LoginAdmin() {
 }
 
 func (adminController *AdminController) LogoutAdmin() {
-	tokenStr := adminController.Ctx.Request.Header.Get("Token")
-	token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("Unexpected signing method: %v\", tokenStr.Header[\"alg\"])")
-		}
-		return []byte(beego.AppConfig.String("token_secret_key")), nil
-	})
-	if err != nil {
-		beego.Debug(err)
-		adminController.Data["json"] = common.Fail(err.Error())
-	} else {
+	tokenStr := adminController.Ctx.Request.Header.Get("Admin-Token")
+	if tokenStr != "" {
+		beego.Debug(tokenStr)
+		token, _ := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("Unexpected signing method: %v\", tokenStr.Header[\"alg\"])")
+			}
+			return []byte(beego.AppConfig.String("token_secret_key")), nil
+		})
 		if claim, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 			beego.Debug(claim["adminName"].(string))
 			beego.Debug(claim["datetime"].(string))
 			common.Delete(claim["adminName"].(string))
-			adminController.Data["json"] = common.Success(true)
 		}
 	}
+	adminController.Data["json"] = common.Success(true)
 	adminController.ServeJSON()
 }
 

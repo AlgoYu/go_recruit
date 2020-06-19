@@ -2,10 +2,10 @@ package common
 
 // Response结构体
 type Result struct {
-	Code int
-	Success bool
-	Message string
-	Data interface{}
+	Code    int         `json:"code"`
+	Success bool        `json:"success"`
+	Message string      `json:"message"`
+	Data    interface{} `json:"data"`
 }
 
 // 构造返回类对象
