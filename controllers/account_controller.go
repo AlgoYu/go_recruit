@@ -50,10 +50,10 @@ func (accountController *AccountController) Login() {
 					beego.Error(sigErr)
 				} else {
 					beego.Debug(signedString)
-					common.HSet(source.Contact, "accountId", source.Id)
-					common.HSet(source.Contact, "accountName", source.Name)
-					common.HSet(source.Contact, "accountEmail", source.Email)
-					common.Expire(source.Contact, 30*MINUTE)
+					common.RedisHSet(source.Contact, "accountId", source.Id)
+					common.RedisHSet(source.Contact, "accountName", source.Name)
+					common.RedisHSet(source.Contact, "accountEmail", source.Email)
+					common.RedisExpire(source.Contact, 30*MINUTE)
 				}
 				accountController.Data["json"] = common.Success(signedString)
 			}
@@ -79,7 +79,7 @@ func (accountController *AccountController) Logout() {
 		if claim, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 			beego.Debug(claim["accountContact"].(string))
 			beego.Debug(claim["datetime"].(string))
-			common.Delete(claim["accountContact"].(string))
+			common.RedisDelete(claim["accountContact"].(string))
 			accountController.Data["json"] = common.Success(true)
 		}
 	}

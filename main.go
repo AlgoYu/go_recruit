@@ -58,11 +58,14 @@ func SetFilter() {
 		//如果设置，则允许共享身份验证凭据，例如cookie
 		AllowCredentials: true,
 	}))
+	// 最后一个参数必须设置为false 不然无法打印数据
+	beego.InsertFilter("/*", beego.FinishRouter, filter.FilterLog, false)
 	// 管理员Token过滤
 	beego.InsertFilter("/admin/*", beego.BeforeRouter, filter.AdminTokenFilter)
 }
 
 func SetRouter() {
+	// 账户接口
 	beego.Router("/account/login", &controllers.AccountController{}, "post:Login")
 	beego.Router("/account/logout", &controllers.AccountController{}, "delete:Logout")
 	beego.Router("/account/add", &controllers.AccountController{}, "post:AddAccount")
@@ -70,7 +73,9 @@ func SetRouter() {
 	beego.Router("/account/modify", &controllers.AccountController{}, "put:ModifyAccount")
 	beego.Router("/account/search", &controllers.AccountController{}, "get:SearchAccount")
 	beego.Router("/account/all", &controllers.AccountController{}, "get:AllAccount")
+	// 管理员接口
 	beego.Router("/loginAdmin", &controllers.AdminController{}, "post:LoginAdmin")
+	beego.Router("/admin/testLogin", &controllers.AdminController{}, "get:TestLogin")
 	beego.Router("/admin/logout", &controllers.AdminController{}, "delete:LogoutAdmin")
 	beego.Router("/admin/add", &controllers.AdminController{}, "post:AddAdmin")
 	beego.Router("/admin/delete", &controllers.AdminController{}, "delete:DeleteAdmin")

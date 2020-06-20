@@ -18,7 +18,7 @@ type BaiduToken struct {
 var BaiduAccessToken string
 
 func GetBaiduToken() {
-	BaiduAccessToken := GetString("Application_Baidu_Api_Token")
+	BaiduAccessToken := RedisGetString("Application_Baidu_Api_Token")
 	if BaiduAccessToken == "" {
 		res, err := http.Post(beego.AppConfig.String("baidu_api_access_token"), "application/json", strings.NewReader(""))
 		if err != nil {
@@ -36,8 +36,8 @@ func GetBaiduToken() {
 				} else {
 					beego.Debug(baiduToken)
 					BaiduAccessToken = baiduToken.AccessToken
-					Set("Application_Baidu_Api_Token", BaiduAccessToken)
-					Expire("Application_Baidu_Api_Token", baiduToken.ExpiresIn)
+					RedisSet("Application_Baidu_Api_Token", BaiduAccessToken)
+					RedisExpire("Application_Baidu_Api_Token", baiduToken.ExpiresIn)
 				}
 			}
 		}

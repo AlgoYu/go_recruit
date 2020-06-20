@@ -36,11 +36,33 @@ func (adminController *AdminController) LoginAdmin() {
 			if signedString, err := token.SignedString([]byte(beego.AppConfig.String("token_secret_key"))); err != nil {
 				adminController.Data["json"] = common.Fail(err.Error())
 			} else {
-				common.HSet(source.Name, "adminPicture", source.Picture)
-				common.Expire(source.Name, 30*MINUTE)
+				common.RedisHSet(source.Name, "adminPicture", source.Picture)
+				common.RedisExpire(source.Name, 30*MINUTE)
 				adminController.Data["json"] = common.Success(signedString)
 			}
 		}
+	}
+	adminController.ServeJSON()
+}
+
+func (adminController *AdminController) TestLogin() {
+	adminToken := adminController.Ctx.Request.Header.Get("Admin-Token")
+	token, _ := jwt.Parse(adminToken, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("Unexpected signing method: %v\", tokenStr.Header[\"alg\"])")
+		}
+		return []byte(beego.AppConfig.String("token_secret_key")), nil
+	})
+	if claim, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		key := claim["adminName"].(string)
+		beego.Debug("Redis admin token keyword:" + key)
+		if common.RedisExists(key) {
+			adminController.Data["json"] = common.Success("Valid admin token!")
+		} else {
+			adminController.Data["json"] = common.Fail("Invalid admin token!")
+		}
+	} else {
+		adminController.Data["json"] = common.Fail("Invalid admin token!")
 	}
 	adminController.ServeJSON()
 }
@@ -58,7 +80,7 @@ func (adminController *AdminController) LogoutAdmin() {
 		if claim, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 			beego.Debug(claim["adminName"].(string))
 			beego.Debug(claim["datetime"].(string))
-			common.Delete(claim["adminName"].(string))
+			common.RedisDelete(claim["adminName"].(string))
 		}
 	}
 	adminController.Data["json"] = common.Success(true)
