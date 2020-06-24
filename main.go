@@ -44,6 +44,8 @@ func main() {
 }
 
 func SetFilter() {
+	// 设置错误处理
+	beego.ErrorHandler("500", common.ErrorHandler)
 	// 允许跨域请求
 	beego.InsertFilter("*", beego.BeforeRouter, cors.Allow(&cors.Options{
 		//允许访问所有源
@@ -65,6 +67,8 @@ func SetFilter() {
 }
 
 func SetRouter() {
+	// 文件上传接口
+	beego.Router("/upload/picture", &controllers.UploadController{}, "post:UploadPicture")
 	// 账户接口
 	beego.Router("/account/login", &controllers.AccountController{}, "post:Login")
 	beego.Router("/account/logout", &controllers.AccountController{}, "delete:Logout")
